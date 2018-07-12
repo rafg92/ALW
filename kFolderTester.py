@@ -17,57 +17,6 @@ from Results import Results
 
 
 
-def transRow(x):
-    # @param x is a row of the dataframe
-    if(x[x.size - 1] > 1400):
-        x[x.size - 1] = 1
-    else:
-        x[x.size - 1] = 0
-    return x
-
-validRowsIndexes = []
-currentIndex = 0
-
-def dataCleaningApply(y):
-    # @param y is a row of the dataframe
-    global validRowsIndexes
-    global currentIndex
-    for i in range(0, y.size) :
-        if(y[i] < 0):
-            return
-    validRowsIndexes.append(currentIndex)
-    currentIndex = currentIndex + 1
-    return
-
-
-def dataCleaning(x):
-    # @param x is a dataframe
-    x.apply(dataCleaningApply, axis = 1)
-
-def eliminateWeekApply(x):
-    #@param x is a coloumn name
-    if("week" in x):
-        return False
-    return True
-
-def eliminateWeekSections(x):
-    #@param x is a list of coloumns' names
-    mask = []
-    i = 0
-    while(i < x.size):
-        mask.append(eliminateWeekApply(x[i]))
-        i += 1
-    return mask
-
-def transLabel(dataframe):
-
-    for i in dataframe.iloc[2:]:
-        print (i)
-        transRow(i)
-
-
-
-
 class kFolderTester:
 
     def __init__(self, k, classifiers, data, features, label):
@@ -395,39 +344,4 @@ class kFolderTester:
 
 
 
-
-if(__name__ == "__main__"):
-    # Set random seed
-    np.random.seed(105)
-
-    # Read in data and display first 5 rows
-    data = pd.read_csv('training_R.csv', sep=";")
-    # print("data.head: ")
-    # print( data.head())
-
-    print('The shape of our data is:', data.shape)
-
-    # Descriptive statistics for each column
-    # print(data.describe())
-
-    data = data.iloc[:, 1:]
-
-    # print(data)
-
-    # One-hot encode the data using pandas get_dummies
-    data = pd.get_dummies(data)
-
-    data = data.apply(transRow, axis=1)
-
-    notWeek = eliminateWeekSections(data.columns)
-    print(notWeek)
-    data = data[data.columns[notWeek]]
-    print(data.columns)
-    fs = FeatureSelector(data)
-    features = fs.featureSelectionByLogisticRegression(40)
-    print(features)
-    clfs = [MLPClassifier(solver='adam', alpha=10, hidden_layer_sizes=(150,), random_state=1, activation="tanh")]
-    #RandomForestClassifier(n_jobs=10, random_state=45), svm.SVC()
-    tester = kFolderTester(1, clfs, data, features, 'shares')
-    tester.startClassificationTest()
 
