@@ -112,6 +112,7 @@ class kFolderTester:
         # train['species'] contains the actual species names. Before we can use it,
         # we need to convert each species name into a digit. So, in this case there
         # are three species, which have been coded as 0, 1, or 2.
+
         y = pd.factorize(train[self.labelCol])[0]
         y_test = pd.factorize(test[self.labelCol])[0]
 
@@ -160,6 +161,58 @@ class kFolderTester:
         res.recall += metrics.recall_score(y_test, preds)
         res.k_cohen += metrics.cohen_kappa_score(y_test, preds)
         res.f1_measure += metrics.f1_score(y_test, preds)
+        self.results[resultIndex] = res
+
+
+    def testMultiClassifier(self, clf, train, test, resultIndex):
+
+        #it tests the classifier and updates the relative result component
+
+        # Show the number of observations for the test and training dataframes
+        print('Number of observations in the training data:', len(train))
+        print('Number of observations in the test data:', len(test))
+
+        # train['species'] contains the actual species names. Before we can use it,
+        # we need to convert each species name into a digit. So, in this case there
+        # are three species, which have been coded as 0, 1, or 2.
+        y = pd.factorize(train[self.labelCol])[0]
+        y_test = pd.factorize(test[self.labelCol])[0]
+
+        definitions = pd.factorize(self.data[self.labelCol])[1]
+
+        # Train the Classifier to take the training features and learn how they relate
+        # to the training y (the species)
+        train = train[self.features]
+        test = test[self.features]
+        scaler = StandardScaler()
+
+        # Don't cheat - fit only on training data
+        scaler.fit(train)
+        train = scaler.transform(train)
+        # apply same transformation to test data
+        test = scaler.transform(test)
+        clf.fit(train, y)
+
+        # Apply the Classifier we trained to the test data (which, remember, it has never seen before)
+        preds = clf.predict(test)
+
+        # Create confusion matrix
+        print("\n\n\n\n\n\n TEST: ")
+        # print(features_size)
+        # Reverse factorize
+        reversefactor = dict(zip(range(definitions.size), definitions))
+        y_test = np.vectorize(reversefactor.get)(y_test)
+        preds = np.vectorize(reversefactor.get)(preds)
+        print(y_test)
+        print("\n\n", preds)
+        # Making the Confusion Matrix
+        print(pd.crosstab(y_test, preds, rownames=['Actual Species'], colnames=['Predicted Species']))
+        res = self.results[resultIndex]
+        res.accuracy += metrics.accuracy_score(y_test, preds)
+        #res.precision += metrics.precision_score(y_test, preds)
+        #res.recall += metrics.recall_score(y_test, preds)
+        res.k_cohen += metrics.cohen_kappa_score(y_test, preds)
+        #res.f1_measure += metrics.f1_score(y_test, preds)
         self.results[resultIndex] = res
 
 
@@ -234,6 +287,23 @@ class kFolderTester:
                 self.testClassifier(clf, train, test, i)
                 i += 1
 
+    def kFoldMultiClassificationTest(self):
+        self.createFolders()
+        for u in range(0, self.k):
+            train = pd.DataFrame()
+            for j in range(0, self.k):
+                if (j != u):
+                    train = train.append(self.folders[j])
+
+            test = self.folders[u]
+            train = pd.DataFrame(train, columns=self.data.columns)
+            test = pd.DataFrame(test, columns=self.data.columns)
+
+            i = 0
+            for clf in self.classifiers:
+                self.testMultiClassifier(clf, train, test, i)
+                i += 1
+
     def splitClassificationTest(self):
 
         #simple training with division training/test of .75/.25
@@ -243,11 +313,27 @@ class kFolderTester:
         # Create two new dataframes, one with the training rows, one with the test rows
         train, test = self.data[self.data['is_train'] == True], self.data[self.data['is_train'] == False]
         self.data = self.data.iloc[:, 0:self.data.columns.size - 1]
-        train = train.iloc[:, 0:self.data.columns.size - 1]
-        test = test.iloc[:, 0:self.data.columns.size - 1]
+        train = train.iloc[:, 0:self.data.columns.size]
+        test = test.iloc[:, 0:self.data.columns.size]
         i = 0
         for clf in self.classifiers:
             self.testClassifier(clf, train, test, i)
+            i += 1
+
+    def splitMultiClassificationTest(self):
+
+        #simple training with division training/test of .75/.25
+
+        self.data['is_train'] = np.random.uniform(0, 1, len(self.data)) <= .75
+
+        # Create two new dataframes, one with the training rows, one with the test rows
+        train, test = self.data[self.data['is_train'] == True], self.data[self.data['is_train'] == False]
+        self.data = self.data.iloc[:, 0:self.data.columns.size - 1]
+        train = train.iloc[:, 0:self.data.columns.size]
+        test = test.iloc[:, 0:self.data.columns.size]
+        i = 0
+        for clf in self.classifiers:
+            self.testMultiClassifier(clf, train, test, i)
             i += 1
 
     def splitRegressionTest(self):
@@ -259,8 +345,8 @@ class kFolderTester:
         # Create two new dataframes, one with the training rows, one with the test rows
         train, test = self.data[self.data['is_train'] == True], self.data[self.data['is_train'] == False]
         self.data = self.data.iloc[:, 0:self.data.columns.size - 1]
-        train = train.iloc[:, 0:self.data.columns.size - 1]
-        test = test.iloc[:, 0:self.data.columns.size - 1]
+        train = train.iloc[:, 0:self.data.columns.size ]
+        test = test.iloc[:, 0:self.data.columns.size]
         i = 0
         for clf in self.classifiers:
             self.testRegressor(clf, train, test, i)
@@ -282,6 +368,20 @@ class kFolderTester:
             self.splitClassificationTest()
         else:
             self.kFoldClassificationTest()
+
+        for r in self.results:
+            print(r.accuracy / self.k)
+            print(r.precision / self.k)
+            print(r.recall / self.k)
+            print(r.k_cohen / self.k)
+            print(r.f1_measure / self.k)
+            print("\n\n")
+
+    def startMultiClassificationTest(self):
+        if(self.k == 1):
+            self.splitMultiClassificationTest()
+        else:
+            self.kFoldMultiClassificationTest()
 
         for r in self.results:
             print(r.accuracy / self.k)
