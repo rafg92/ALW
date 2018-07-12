@@ -326,8 +326,8 @@ if(__name__ == "__main__"):
     fs = FeatureSelector(data)
     features = fs.featureSelectionByLogisticRegression(40)
     print(features)
-    clfs = [MLPClassifier(solver='adam', alpha=10, hidden_layer_sizes=(150,150,), random_state=1, activation="tanh")]
+    clfs = [MLPClassifier(solver='adam', alpha=10, hidden_layer_sizes=(150,), random_state=1, activation="tanh")]
     #RandomForestClassifier(n_jobs=10, random_state=45), svm.SVC()
-    tester = kFolderTester(3, clfs, data, features, 'shares')
+    tester = kFolderTester(1, clfs, data, features, 'shares')
     tester.startClassificationTest()
 
