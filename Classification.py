@@ -1,12 +1,13 @@
 import numpy as np
 import pandas as pd
-from sklearn import metrics
+from sklearn import metrics, tree
 from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn import svm
 from sklearn.feature_selection import SelectKBest, mutual_info_classif, RFE
 from sklearn.metrics import mean_squared_error
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
@@ -102,12 +103,15 @@ if(__name__ == "__main__"):
     clfs = [MLPClassifier(solver='lbfgs', alpha=0.1, hidden_layer_sizes=(150,), random_state=1, activation="tanh", max_iter=500),
             MLPClassifier(solver='adam', alpha=0.1, hidden_layer_sizes=(150,), random_state=1, activation="tanh", max_iter=500),
             MLPClassifier(solver='sgd', alpha=0.1, hidden_layer_sizes=(150,), random_state=1, activation="tanh", max_iter=500),
-            RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 42),
-            svm.SVC(kernel='rbf', C=1e3, gamma=0.1),
-            svm.SVC(kernel='poly', C=1e3, degree=3),
-            svm.SVC(kernel = 'linear', C = 1e3),
-            svm.SVC()]
+            RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 42),tree.DecisionTreeClassifier(),
+            svm.SVC(kernel='rbf', C=1.0, gamma=0.1, probability=True),
+            svm.SVC(kernel='poly', C=1.0, degree=3, probability=True),
+            svm.SVC(kernel = 'linear', C = 1.0, probability=True),
+            KNeighborsClassifier()]
+    clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "rbf", "poly", "linear", "knn"]
+    #clfNames = ["adam"]
+
     #RandomForestClassifier(n_jobs=10, random_state=45), svm.SVC()
-    tester = kFolderTester(1, clfs, data, features, 'shares')
+    tester = kFolderTester(1, clfs, data, features, 'shares', clfNames)
     tester.startClassificationTest()
 

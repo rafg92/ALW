@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from sklearn import metrics
@@ -19,7 +21,7 @@ from Results import Results
 
 class kFolderTester:
 
-    def __init__(self, k, classifiers, data, features, label):
+    def __init__(self, k, classifiers, data, features, label, clfNames):
         self.k = k
         self.classifiers = classifiers
         self.results = []
@@ -30,6 +32,7 @@ class kFolderTester:
         self.mse = [0]*len(self.classifiers)
         for i in range(0, len(self.classifiers)):
             self.results.append(Results())
+        self.clfNames = clfNames
 
     def createFolders(self):
         #it prepares the folders for k-fold cross validation
@@ -110,6 +113,7 @@ class kFolderTester:
         res.recall += metrics.recall_score(y_test, preds)
         res.k_cohen += metrics.cohen_kappa_score(y_test, preds)
         res.f1_measure += metrics.f1_score(y_test, preds)
+        res.log_loss += metrics.log_loss(y_test, clf.predict_proba(test))
         self.results[resultIndex] = res
 
 
@@ -158,10 +162,11 @@ class kFolderTester:
         print(pd.crosstab(y_test, preds, rownames=['Actual Species'], colnames=['Predicted Species']))
         res = self.results[resultIndex]
         res.accuracy += metrics.accuracy_score(y_test, preds)
-        #res.precision += metrics.precision_score(y_test, preds)
-        #res.recall += metrics.recall_score(y_test, preds)
+        res.precision += metrics.precision_score(y_test, preds, average="macro")
+        res.recall += metrics.recall_score(y_test, preds, average="macro")
         res.k_cohen += metrics.cohen_kappa_score(y_test, preds)
-        #res.f1_measure += metrics.f1_score(y_test, preds)
+        res.f1_measure += metrics.f1_score(y_test, preds, average="macro")
+        res.log_loss += metrics.log_loss(y_test, clf.predict_proba(test))
         self.results[resultIndex] = res
 
 
@@ -307,10 +312,8 @@ class kFolderTester:
         else:
             self.kFoldRegressionTest()
         print("Result")
-        for r in self.mse:
-            print(r/self.k)
-            print("\n\n")
-
+        for r in range(0, len(self.mse)):
+            self.printResultsRegression(r)
 
     def startClassificationTest(self):
         if(self.k == 1):
@@ -318,13 +321,8 @@ class kFolderTester:
         else:
             self.kFoldClassificationTest()
 
-        for r in self.results:
-            print(r.accuracy / self.k)
-            print(r.precision / self.k)
-            print(r.recall / self.k)
-            print(r.k_cohen / self.k)
-            print(r.f1_measure / self.k)
-            print("\n\n")
+        for r in range(0, len(self.results)):
+            self.printResultsClassification(r)
 
     def startMultiClassificationTest(self):
         if(self.k == 1):
@@ -332,16 +330,51 @@ class kFolderTester:
         else:
             self.kFoldMultiClassificationTest()
 
-        for r in self.results:
-            print(r.accuracy / self.k)
-            print(r.precision / self.k)
-            print(r.recall / self.k)
-            print(r.k_cohen / self.k)
-            print(r.f1_measure / self.k)
-            print("\n\n")
+        for r in range(0, len(self.results)):
+            self.printResultsMultiClassification(r)
+
+    def printResultsClassification(self, index):
+        path = "Classification/" + self.clfNames[index]
+        file = Path(path)
+        if not file.is_file():
+            open(path, "w+")
+        f = open(path, "a")
+        line = str(len(self.features)) + "," + str(self.results[index].accuracy/self.k) +  "," \
+               + str(self.results[index].precision/self.k) + "," + str(self.results[index].recall/self.k) \
+               + "," + str(self.results[index].k_cohen / self.k) + "," + str(self.results[index].f1_measure / self.k)\
+               + "," + str(self.results[index].log_loss / self.k) + '\n'
+        print(line)
+        f.write(line)
+        f.close()
+
+    def printResultsMultiClassification(self, index):
+        path = "MultiClassification/" + self.clfNames[index]
+        file = Path(path)
+        if not file.is_file():
+            open(path, "w+")
+        f = open(path, "a")
+        # line = str(len(self.features)) + "," + str(self.results[index].accuracy/self.k) +  "," \
+        #        + str(self.results[index].k_cohen / self.k)\
+        #        + "," + str(self.results[index].log_loss / self.k) + '\n'
+        line = str(len(self.features)) + "," + str(self.results[index].accuracy / self.k) + "," \
+               + str(self.results[index].precision / self.k) + "," + str(self.results[index].recall / self.k) \
+               + "," + str(self.results[index].k_cohen / self.k) + "," + str(self.results[index].f1_measure / self.k) \
+               + "," + str(self.results[index].log_loss / self.k) + '\n'
+        print(line)
+        f.write(line)
+        f.close()
 
 
-
+    def printResultsRegression(self, index):
+        path = "Regression/" + self.clfNames[index]
+        file = Path(path)
+        if not file.is_file():
+            open(path, "w+")
+        f = open(path, "a")
+        line = str(len(self.features)) + "," + str(self.mse[index]/self.k) + '\n'
+        print(line)
+        f.write(line)
+        f.close()
 
 
 
