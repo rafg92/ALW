@@ -109,6 +109,8 @@ if(__name__ == "__main__"):
             svm.SVC(kernel = 'linear', C = 1.0, probability=True),
             KNeighborsClassifier()]
     clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "rbf", "poly", "linear", "knn"]
+    #clfs = [MLPClassifier(solver='adam', alpha=10, hidden_layer_sizes=(150,), random_state=1, activation="tanh")]
+
     #clfNames = ["adam"]
 
     #RandomForestClassifier(n_jobs=10, random_state=45), svm.SVC()

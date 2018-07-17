@@ -25,3 +25,22 @@ class FeatureSelector:
 
         features = (self.data.columns[0:self.data.columns.size - 1])[fit.support_]
         return features
+
+    def featureSelectionRegression(self, featureSize):
+        #feature selection for regression tasks
+        labels = self.data["G3"]
+        train = self.data.drop("G3", axis=1)
+        X = train.values
+        Y = labels.values
+        # feature extraction
+        model = LogisticRegression()
+        rfe = RFE(model, featureSize)
+        fit = rfe.fit(X, Y)
+        print("Num Features: ")
+        print(fit.n_features_)
+        print("Selected Features: ")
+        print(fit.support_)
+        # print("Feature Ranking: %s") % fit.ranking_
+
+        features = (train.columns)[fit.support_]
+        return features

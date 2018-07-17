@@ -150,16 +150,16 @@ class kFolderTester:
         preds = clf.predict(test)
 
         # Create confusion matrix
-        print("\n\n\n\n\n\n TEST: ")
+        #print("\n\n\n\n\n\n TEST: ")
         # print(features_size)
         # Reverse factorize
         reversefactor = dict(zip(range(definitions.size), definitions))
-        y_test = np.vectorize(reversefactor.get)(y_test)
-        preds = np.vectorize(reversefactor.get)(preds)
-        print(y_test)
-        print("\n\n", preds)
+        y1_test = np.vectorize(reversefactor.get)(y_test)
+        preds1 = np.vectorize(reversefactor.get)(preds)
+        #print(y_test)
+        #print("\n\n", preds)
         # Making the Confusion Matrix
-        print(pd.crosstab(y_test, preds, rownames=['Actual Species'], colnames=['Predicted Species']))
+        #print(pd.crosstab(y1_test, preds1, rownames=['Actual Species'], colnames=['Predicted Species']))
         res = self.results[resultIndex]
         res.accuracy += metrics.accuracy_score(y_test, preds)
         res.precision += metrics.precision_score(y_test, preds, average="macro")
@@ -181,12 +181,12 @@ class kFolderTester:
 
         train = train[self.features]
         test = test[self.features]
-        scaler = StandardScaler()
+        #scaler = StandardScaler()
         # Don't cheat - fit only on training data
-        scaler.fit(train)
-        train = scaler.transform(train)
+        #scaler.fit(train)
+        #train = scaler.transform(train)
         # apply same transformation to test data
-        test = scaler.transform(test)
+        #test = scaler.transform(test)
 
         clf.fit(train, y)
 
@@ -286,6 +286,7 @@ class kFolderTester:
         train = train.iloc[:, 0:self.data.columns.size]
         test = test.iloc[:, 0:self.data.columns.size]
         i = 0
+        print("DATA IN TESTER", self.data)
         for clf in self.classifiers:
             self.testMultiClassifier(clf, train, test, i)
             i += 1
@@ -334,7 +335,7 @@ class kFolderTester:
             self.printResultsMultiClassification(r)
 
     def printResultsClassification(self, index):
-        path = "Classification/" + self.clfNames[index]
+        path = "Classification/Train/" + self.clfNames[index]
         file = Path(path)
         if not file.is_file():
             open(path, "w+")
@@ -348,7 +349,7 @@ class kFolderTester:
         f.close()
 
     def printResultsMultiClassification(self, index):
-        path = "MultiClassification/" + self.clfNames[index]
+        path = "MultiClassification/Train/" + self.clfNames[index]
         file = Path(path)
         if not file.is_file():
             open(path, "w+")
@@ -366,7 +367,7 @@ class kFolderTester:
 
 
     def printResultsRegression(self, index):
-        path = "Regression/" + self.clfNames[index]
+        path = "Regression/Train/" + self.clfNames[index]
         file = Path(path)
         if not file.is_file():
             open(path, "w+")
