@@ -38,7 +38,7 @@ class kFolderTester:
         #it prepares the folders for k-fold cross validation
 
         folders = [[]] * self.k
-        dataTmp = self.data
+        dataTmp = self.data.copy()
         for u in range(0, self.k):
             # Create a new column that for each row, generates a random number between 0 and 1, and
             # if that value is less than or equal to .75, then sets the value of that cell as True
@@ -176,17 +176,18 @@ class kFolderTester:
         print('Number of observations in the training data:', len(train))
         print('Number of observations in the test data:', len(test))
 
+        scaler = StandardScaler()
+        # Don't cheat - fit only on training data
+        scaler.fit(train)
+        train = pd.DataFrame(scaler.transform(train), columns=train.columns)
+        # apply same transformation to test data
+        test = pd.DataFrame(scaler.transform(test), columns=test.columns)
+
         y = train[self.labelCol]
         y_test = test[self.labelCol]
 
         train = train[self.features]
         test = test[self.features]
-        #scaler = StandardScaler()
-        # Don't cheat - fit only on training data
-        #scaler.fit(train)
-        #train = scaler.transform(train)
-        # apply same transformation to test data
-        #test = scaler.transform(test)
 
         clf.fit(train, y)
 

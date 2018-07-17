@@ -33,7 +33,7 @@ def printResults(mse, clfName, n_features):
 
 
 if(__name__ == "__main__"):
-    np.random.seed(15)
+    np.random.seed(12345)
 
     # Read in data and display first 5 rows
     data = pd.read_csv('training_AMPL.csv', sep=",")
@@ -44,21 +44,24 @@ if(__name__ == "__main__"):
     labelName = "G3"
     labels = data[labelName]
     data = pd.get_dummies(data)
-    print(data.columns.size)
-    print(data)
     data[labelName] = labels
 
     train, test = DataSplitter().splitData(data.copy())
-    Y_train = train[labelName]
-    print(train.columns)
-    X_train_origin = train.copy().drop(labelName, axis=1)
-    print(X_train_origin.columns)
-    Y_test = test[labelName]
-    X_test_origin = test.copy().drop(labelName, axis=1)
+
+    print(train.copy())
+
+    #preparing test and training for final evaluation: using copies not to create problems
+    scaler = StandardScaler()
+
+    scaler.fit(train)
+
+    trainTmp = pd.DataFrame(scaler.transform(train.copy()), columns=train.columns)
+    # apply same transformation to test data
+    testTmp = pd.DataFrame(scaler.transform(test.copy()), columns=test.columns)
 
     fs = FeatureSelector(train.copy())
     fsSize = train.columns.size
-    threshold = 10
+    threshold = train.columns.size - 1
 
     fs = FeatureSelector(train.copy())
     while(fsSize >= threshold):
@@ -68,31 +71,26 @@ if(__name__ == "__main__"):
         svr_rbf = SVR(kernel='rbf', C=1.0, gamma=0.1)
         svr_lin = SVR(kernel='linear', C=1.0)
         svr_poly = SVR(kernel='poly', C=1.0, degree=3)
-        clfs = [MLPRegressor(solver='lbfgs', alpha = 10.0, hidden_layer_sizes=(100,), random_state=1, activation="tanh",epsilon=1e-8, early_stopping=True),
-        #     RandomForestRegressor(n_jobs=10, random_state=45, n_estimators=5),  DecisionTreeRegressor(), svr_lin, svr_poly, svr_rbf]
-        # clfNames = ["lbfgs", "randomForest", "decisionTree", "linear", "poly",  "rbf",]
-        ]
-        clfNames = ['lbfgs']
+
+        clfs = [MLPRegressor(solver='lbfgs', alpha = 10.0, hidden_layer_sizes=(10,), activation="tanh",epsilon=1e-4),
+        RandomForestRegressor(n_jobs=10, random_state=45, n_estimators=5),  DecisionTreeRegressor(), svr_lin, svr_poly, svr_rbf]
+        clfNames = ["lbfgs", "randomForest", "decisionTree", "linear", "poly",  "rbf",]
+
         tester = kFolderTester(4, clfs, train.copy(), features, labelName, clfNames)
         tester.startRegressionTest()
+
+
         # starting on the evaluation set
-        X_train = X_train_origin[features]
-        X_test = X_test_origin[features]
 
-        #scaler = StandardScaler()
+        Y_train = trainTmp[labelName]
+        X_train = trainTmp[features]
+        Y_test = testTmp[labelName]
+        X_test = testTmp[features]
 
-        #scaler.fit(X_train)
-        #X_train = scaler.transform(X_train)
-        # apply same transformation to test data
-        #X_test = scaler.transform(X_test)
-        print(X_train)
-        print(Y_train)
         i = 0
         while (i < len(clfs)):
             clfs[i].fit(X_train, Y_train)
             preds = clfs[i].predict(X_test)
-
-
             printResults(mean_squared_error(Y_test, preds), clfNames[i], len(features))
             i += 1
 
