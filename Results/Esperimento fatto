@@ -1,0 +1,3 @@
+Ho lanciato da featureSize = data.columns.size fino a 41 con salti di 5. Per le reti neurali alpha=0.1 e hidden_layers=(150,), ho lasciato come ho trovato.
+La cosa interessante è il risultato del train con tutte le features in cui il risultato faceva schifo mentre il test risultava buono(solito risultato sopra 0.6 circa)
+Negli altri casi Adam andava meglio di tutti bene o male avendo una grande crescita.
