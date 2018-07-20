@@ -2,7 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn import metrics
+from sklearn import metrics, preprocessing
 from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -79,7 +79,9 @@ class kFolderTester:
         # to the training y (the species)
         train = train[self.features]
         test = test[self.features]
-        scaler = StandardScaler()
+        #scaler = StandardScaler()
+        scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1))
+
         # Don't cheat - fit only on training data
         scaler.fit(train)
         train = scaler.transform(train)
@@ -137,7 +139,8 @@ class kFolderTester:
         # to the training y (the species)
         train = train[self.features]
         test = test[self.features]
-        scaler = StandardScaler()
+        #scaler = StandardScaler()
+        scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1))
 
         # Don't cheat - fit only on training data
         scaler.fit(train)
@@ -176,8 +179,10 @@ class kFolderTester:
         print('Number of observations in the training data:', len(train))
         print('Number of observations in the test data:', len(test))
 
-        scaler = StandardScaler()
+        #scaler = StandardScaler()
         # Don't cheat - fit only on training data
+        scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1))
+
         scaler.fit(train)
         train = pd.DataFrame(scaler.transform(train), columns=train.columns)
         # apply same transformation to test data

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn import metrics, tree
+from sklearn import metrics, tree, preprocessing
 from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import LogisticRegression
@@ -15,6 +15,7 @@ from sklearn.svm import SVR
 
 from DataSplitter import DataSplitter
 from FeatureSelector import FeatureSelector
+from ResultPlotter import Plotter
 from Results import Results
 from kFolderTester import kFolderTester
 
@@ -90,12 +91,21 @@ if(__name__ == "__main__"):
     Y_test = pd.factorize(test[labelName])[0]
     X_test_origin = test.iloc[:, 0:test.columns.size - 1].copy()
 
+    #scaler = StandardScaler()
+    # X_train_minmax = min_max_scaler.fit_transform(X_train)
+    scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1))
+
+    scaler.fit(X_train_origin)
+    X_train_origin = pd.DataFrame(scaler.transform(X_train_origin.copy()), columns= X_train_origin.columns)
+    # apply same transformation to test data
+    X_test_origin = pd.DataFrame(scaler.transform(X_test_origin.copy()), columns= X_test_origin.columns)
+
     featureSize = train.columns.size
     threshold = 5
 
     fs = FeatureSelector(train.copy())
 
-
+    clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "rbf", "poly", "linear", "knn"]
 
     while(featureSize >= threshold):
         features = fs.featureSelectionByLogisticRegression(featureSize)
@@ -111,8 +121,7 @@ if(__name__ == "__main__"):
                 svm.SVC(kernel='poly', C=1.0, degree=3, probability=True),
                 svm.SVC(kernel = 'linear', C = 1.0, probability=True),
                 KNeighborsClassifier()]
-        clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "rbf", "poly", "linear", "knn"]
-        tester = kFolderTester(1, clfs, train.copy(), features, labelName, clfNames)
+        tester = kFolderTester(10, clfs, train.copy(), features, labelName, clfNames)
         tester.startMultiClassificationTest()
 
 
@@ -120,14 +129,7 @@ if(__name__ == "__main__"):
         X_train = X_train_origin[features]
         X_test = X_test_origin[features]
 
-        scaler = StandardScaler()
 
-        scaler.fit(X_train)
-        X_train = scaler.transform(X_train)
-        # apply same transformation to test data
-        X_test = scaler.transform(X_test)
-        print(X_train)
-        print(Y_train)
         i = 0
         result = Results()
         while(i < len(clfs)):
@@ -144,3 +146,17 @@ if(__name__ == "__main__"):
             i += 1
 
         featureSize -= 5
+    dirPath = "MultiClassification/Test/"
+    plotter = Plotter(clfNames, dirPath)
+    metricNames = ["Accuracy", "Precision", "Recall", "K_cohen", "F1_measure", "Log-loss"]
+    i = 0
+    while( i < len(metricNames)):
+        plotter.plotMetric( dirPath + metricNames[i]+".png", i + 1)
+        i += 1
+
+    dirPath = "MultiClassification/Train/"
+    plotter = Plotter(clfNames, dirPath)
+    i = 0
+    while (i < len(metricNames)):
+        plotter.plotMetric(dirPath + metricNames[i] + ".png", i + 1)
+        i += 1

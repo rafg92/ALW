@@ -1,6 +1,8 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from sklearn import metrics, tree
+from sklearn import metrics, tree, preprocessing
 from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -12,8 +14,10 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 
+from DataSplitter import DataSplitter
 from Error import Mse
 from FeatureSelector import FeatureSelector
+from ResultPlotter import Plotter
 from Results import Results
 from kFolderTester import kFolderTester
 
@@ -66,6 +70,22 @@ def transLabel(dataframe):
         print (i)
         transRow(i)
 
+def printResults(results, clfName, n_features):
+    path = "Classification/Test/" + clfName
+    file = Path(path)
+    if not file.is_file():
+        open(path, "w+")
+    f = open(path, "a")
+    # line = str(len(self.features)) + "," + str(self.results[index].accuracy/self.k) +  "," \
+    #        + str(self.results[index].k_cohen / self.k)\
+    #        + "," + str(self.results[index].log_loss / self.k) + '\n'
+    line = str(n_features) + "," + str(results.accuracy) + "," \
+           + str(results.precision) + "," + str(results.recall) \
+           + "," + str(results.k_cohen) + "," + str(results.f1_measure) \
+           + "," + str(results.log_loss) + '\n'
+    print(line)
+    f.write(line)
+    f.close()
 
 
 
@@ -96,24 +116,85 @@ if(__name__ == "__main__"):
     print(notWeek)
     data = data[data.columns[notWeek]]
     print(data.columns)
-    fs = FeatureSelector(data)
-    features = fs.featureSelectionByLogisticRegression(40)
-    print(features)
-    #clfs = [MLPClassifier(solver='adam', alpha=10, hidden_layer_sizes=(150,), random_state=1, activation="tanh")]
-    clfs = [MLPClassifier(solver='lbfgs', alpha=0.1, hidden_layer_sizes=(150,), random_state=1, activation="tanh", max_iter=500),
-            MLPClassifier(solver='adam', alpha=0.1, hidden_layer_sizes=(150,), random_state=1, activation="tanh", max_iter=500),
-            MLPClassifier(solver='sgd', alpha=0.1, hidden_layer_sizes=(150,), random_state=1, activation="tanh", max_iter=500),
-            RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 42),tree.DecisionTreeClassifier(),
-            svm.SVC(kernel='rbf', C=1.0, gamma=0.1, probability=True),
-            svm.SVC(kernel='poly', C=1.0, degree=3, probability=True),
-            svm.SVC(kernel = 'linear', C = 1.0, probability=True),
-            KNeighborsClassifier()]
+
+    labelName = "shares"
+
+    train, test = DataSplitter().splitData(data.copy())
+    Y_train = pd.factorize(train[labelName])[0]
+    X_train_origin = train.iloc[:, 0:train.columns.size - 1].copy()
+    Y_test = pd.factorize(test[labelName])[0]
+    X_test_origin = test.iloc[:, 0:test.columns.size - 1].copy()
+
+    # scaler = StandardScaler()
+    # X_train_minmax = min_max_scaler.fit_transform(X_train)
+    scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1))
+
+    scaler.fit(X_train_origin)
+    X_train_origin = pd.DataFrame(scaler.transform(X_train_origin.copy()), columns=X_train_origin.columns)
+    # apply same transformation to test data
+    X_test_origin = pd.DataFrame(scaler.transform(X_test_origin.copy()), columns=X_test_origin.columns)
+
+    fs = FeatureSelector(data.copy())
+    featureSize = 40#data.columns.size
+    threshold = 10
+
     clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "rbf", "poly", "linear", "knn"]
-    #clfs = [MLPClassifier(solver='adam', alpha=10, hidden_layer_sizes=(150,), random_state=1, activation="tanh")]
 
-    #clfNames = ["adam"]
+    while(featureSize >= threshold):
+        features = fs.featureSelectionByLogisticRegression(featureSize)
+        print(features)
+        #clfs = [MLPClassifier(solver='adam', alpha=10, hidden_layer_sizes=(150,), random_state=1, activation="tanh")]
+        clfs = [MLPClassifier(solver='lbfgs', alpha=0.1, hidden_layer_sizes=(150,), random_state=1, activation="tanh", max_iter=500),
+                MLPClassifier(solver='adam', alpha=0.1, hidden_layer_sizes=(150,), random_state=1, activation="tanh", max_iter=500),
+                MLPClassifier(solver='sgd', alpha=0.1, hidden_layer_sizes=(150,), random_state=1, activation="tanh", max_iter=500),
+                RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 42),tree.DecisionTreeClassifier(),
+                svm.SVC(kernel='rbf', C=1.0, gamma=0.1, probability=True),
+                svm.SVC(kernel='poly', C=1.0, degree=3, probability=True),
+                svm.SVC(kernel = 'linear', C = 1.0, probability=True),
+                KNeighborsClassifier()]
+        #clfs = [MLPClassifier(solver='adam', alpha=10, hidden_layer_sizes=(150,), random_state=1, activation="tanh")]
 
-    #RandomForestClassifier(n_jobs=10, random_state=45), svm.SVC()
-    tester = kFolderTester(1, clfs, data, features, 'shares', clfNames)
-    tester.startClassificationTest()
+        #clfNames = ["adam"]
+
+        #RandomForestClassifier(n_jobs=10, random_state=45), svm.SVC()
+        tester = kFolderTester(1, clfs, train.copy(), features, labelName, clfNames)
+        tester.startClassificationTest()
+
+        # starting on the evaluation set
+        X_train = X_train_origin[features]
+        X_test = X_test_origin[features]
+
+        i = 0
+        result = Results()
+        while (i < len(clfs)):
+            clfs[i].fit(X_train, Y_train)
+            preds = clfs[i].predict(X_test)
+
+            result.accuracy = metrics.accuracy_score(Y_test, preds)
+            result.precision = metrics.precision_score(Y_test, preds)
+            result.recall = metrics.recall_score(Y_test, preds)
+            result.k_cohen = metrics.cohen_kappa_score(Y_test, preds)
+            result.f1_measure = metrics.f1_score(Y_test, preds)
+            result.log_loss = metrics.log_loss(Y_test, clfs[i].predict_proba(X_test))
+            printResults(result, clfNames[i], len(features))
+            i += 1
+
+        featureSize -= 5
+
+    dirPath = "Classification/Test/"
+    plotter = Plotter(clfNames, dirPath)
+    metricNames = ["Accuracy", "Precision", "Recall", "K_cohen", "F1_measure", "Log-loss"]
+    i = 0
+    while (i < len(metricNames)):
+        plotter.plotMetric(dirPath + metricNames[i] + ".png", i + 1)
+        i += 1
+
+    dirPath = "Classification/Train/"
+    plotter = Plotter(clfNames, dirPath)
+    i = 0
+    while (i < len(metricNames)):
+        plotter.plotMetric(dirPath + metricNames[i] + ".png", i + 1)
+        i += 1
+
+
 
