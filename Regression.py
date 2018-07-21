@@ -70,7 +70,7 @@ if(__name__ == "__main__"):
     clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "linear", "poly", "rbf", ]
 
     while(fsSize >= threshold):
-        features = fs.featureSelectionRegression(fsSize, labelName)
+        features = fs.featureSelectionSelectKBestRegression(fsSize, labelName)
         print("FEATURES NEL WHILE ", features)
         #C=1e3
         svr_rbf = SVR(kernel='rbf', C=1)

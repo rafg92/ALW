@@ -108,7 +108,7 @@ if(__name__ == "__main__"):
     clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "rbf", "poly", "linear", "knn"]
 
     while(featureSize >= threshold):
-        features = fs.featureSelectionByLogisticRegression(featureSize)
+        features = fs.featureSelectionSelectKBestClassification(featureSize, labelName)
         print(features)
         # clfs = [MLPClassifier(solver='adam', alpha=10, hidden_layer_sizes=(150,), random_state=1, activation="tanh")]
         #

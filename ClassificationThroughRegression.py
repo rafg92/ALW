@@ -151,7 +151,6 @@ if(__name__ == "__main__"):
 
     fsSize = train.columns.size
     threshold = 10
-
     fs = FeatureSelector(train.copy())
 
     clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "rbf", "poly", "linear", "knn"]
