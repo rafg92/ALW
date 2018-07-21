@@ -26,10 +26,11 @@ class FeatureSelector:
         features = (self.data.columns[0:self.data.columns.size - 1])[fit.support_]
         return features
 
-    def featureSelectionRegression(self, featureSize):
+    def featureSelectionRegression(self, featureSize, labelName):
         #feature selection for regression tasks
-        labels = self.data["G3"]
-        train = self.data.drop("G3", axis=1)
+        data = self.data.copy()
+        labels = data[labelName]
+        train = data.drop(labelName, axis=1)
         X = train.values
         Y = labels.values
         # feature extraction

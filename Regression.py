@@ -62,13 +62,15 @@ if(__name__ == "__main__"):
     # apply same transformation to test data
     testTmp = pd.DataFrame(scaler.transform(test.copy()), columns=test.columns)
 
-    fs = FeatureSelector(train.copy())
     fsSize = train.columns.size
     threshold = 10
 
     fs = FeatureSelector(train.copy())
+
+    clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "linear", "poly", "rbf", ]
+
     while(fsSize >= threshold):
-        features = fs.featureSelectionRegression(fsSize)
+        features = fs.featureSelectionRegression(fsSize, labelName)
         print("FEATURES NEL WHILE ", features)
         #C=1e3
         svr_rbf = SVR(kernel='rbf', C=1)
@@ -79,7 +81,6 @@ if(__name__ == "__main__"):
                 MLPRegressor(solver='adam', alpha=10.0, hidden_layer_sizes=(10,), activation="tanh", epsilon=1e-4),
                 MLPRegressor(solver='sgd', alpha=10.0, hidden_layer_sizes=(10,), activation="tanh", epsilon=1e-4),
                 RandomForestRegressor(n_jobs=10, random_state=45, n_estimators=10),  DecisionTreeRegressor(), svr_lin, svr_poly, svr_rbf]
-        clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "linear", "poly",  "rbf",]
 
         tester = kFolderTester(4, clfs, train.copy(), features, labelName, clfNames)
         tester.startRegressionTest()
