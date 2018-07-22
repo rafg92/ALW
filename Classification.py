@@ -91,7 +91,7 @@ def printResults(results, clfName, n_features):
 
 if(__name__ == "__main__"):
     # Set random seed
-    np.random.seed(105)
+    np.random.seed(12345)
 
     # Read in data and display first 5 rows
     data = pd.read_csv('training_R.csv', sep=";")
@@ -119,7 +119,8 @@ if(__name__ == "__main__"):
 
     labelName = "shares"
 
-    train, test = DataSplitter().splitData(data.copy())
+    #train, test = DataSplitter().splitData(data.copy())
+    train, test = DataSplitter().splitDataEqually(data, labelName)
     Y_train = pd.factorize(train[labelName])[0]
     X_train_origin = train.iloc[:, 0:train.columns.size - 1].copy()
     Y_test = pd.factorize(test[labelName])[0]
@@ -134,7 +135,7 @@ if(__name__ == "__main__"):
     # apply same transformation to test data
     X_test_origin = pd.DataFrame(scaler.transform(X_test_origin.copy()), columns=X_test_origin.columns)
 
-    fs = FeatureSelector(data.copy())
+    fs = FeatureSelector(train.copy())
     featureSize = data.columns.size
     threshold = 10
 

@@ -13,6 +13,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 
+from DataSplitter import DataSplitter
 from Error import Mse
 from FeatureSelector import FeatureSelector
 from Results import Results
@@ -36,6 +37,28 @@ class kFolderTester:
 
     def createFolders(self):
         #it prepares the folders for k-fold cross validation
+
+        folders = [[]] * self.k
+        dataTmp = self.data.copy()
+        for u in range(0, self.k):
+            # Create a new column that for each row, generates a random number between 0 and 1, and
+            # if that value is less than or equal to .75, then sets the value of that cell as True
+            # and false otherwise. This is a quick and dirty way of randomly assigning some rows to
+            # be used as the training data and some as the test data.
+
+            # dataTmp['is_train'] = np.random.uniform(0, 1, len(dataTmp)) <= 1.0 / (self.k - u)
+            # folder, dataTmp = dataTmp[dataTmp['is_train'] == True], dataTmp[dataTmp['is_train'] == False]
+            # print(dataTmp.shape)
+            # folders[u] = folder.iloc[:, 0:folder.columns.size - 1]
+
+            folder, dataTmp = DataSplitter().splitDataEqually(dataTmp,self.labelCol, 1.0 / (self.k - u))
+            folders[u] = folder
+            # folders[u] = dataTmp[booleanMask]
+            # dataTmp = dataTmp[booleanMask==False]
+        self.folders = folders
+
+    def createFoldersRegression(self):
+        # it prepares the folders for k-fold cross validation
 
         folders = [[]] * self.k
         dataTmp = self.data.copy()
@@ -154,7 +177,7 @@ class kFolderTester:
 
         # Create confusion matrix
         #print("\n\n\n\n\n\n TEST: ")
-        # print(features_size)
+        print(train.columns.size)
         # Reverse factorize
         reversefactor = dict(zip(range(definitions.size), definitions))
         y1_test = np.vectorize(reversefactor.get)(y_test)
@@ -162,7 +185,7 @@ class kFolderTester:
         #print(y_test)
         #print("\n\n", preds)
         # Making the Confusion Matrix
-        #print(pd.crosstab(y1_test, preds1, rownames=['Actual Species'], colnames=['Predicted Species']))
+        print(pd.crosstab(y1_test, preds1, rownames=['Actual Species'], colnames=['Predicted Species']))
         res = self.results[resultIndex]
         res.accuracy += metrics.accuracy_score(y_test, preds)
         res.precision += metrics.precision_score(y_test, preds, average="macro")
@@ -214,7 +237,7 @@ class kFolderTester:
 
 
     def kFoldRegressionTest(self):
-        self.createFolders()
+        self.createFoldersRegression()
         for u in range(0, self.k):
             train = pd.DataFrame()
             for j in range(0, self.k):
@@ -268,13 +291,14 @@ class kFolderTester:
 
         #simple training with division training/test of .75/.25
 
-        self.data['is_train'] = np.random.uniform(0, 1, len(self.data)) <= .75
-
-        # Create two new dataframes, one with the training rows, one with the test rows
-        train, test = self.data[self.data['is_train'] == True], self.data[self.data['is_train'] == False]
-        self.data = self.data.iloc[:, 0:self.data.columns.size - 1]
-        train = train.iloc[:, 0:self.data.columns.size]
-        test = test.iloc[:, 0:self.data.columns.size]
+        # self.data['is_train'] = np.random.uniform(0, 1, len(self.data)) <= .75
+        #
+        # # Create two new dataframes, one with the training rows, one with the test rows
+        # train, test = self.data[self.data['is_train'] == True], self.data[self.data['is_train'] == False]
+        # self.data = self.data.iloc[:, 0:self.data.columns.size - 1]
+        # train = train.iloc[:, 0:self.data.columns.size]
+        # test = test.iloc[:, 0:self.data.columns.size]
+        train, test = DataSplitter().splitDataEqually(self.data , self.labelCol)
         i = 0
         for clf in self.classifiers:
             self.testClassifier(clf, train, test, i)
@@ -284,13 +308,14 @@ class kFolderTester:
 
         #simple training with division training/test of .75/.25
 
-        self.data['is_train'] = np.random.uniform(0, 1, len(self.data)) <= .75
-
-        # Create two new dataframes, one with the training rows, one with the test rows
-        train, test = self.data[self.data['is_train'] == True], self.data[self.data['is_train'] == False]
-        self.data = self.data.iloc[:, 0:self.data.columns.size - 1]
-        train = train.iloc[:, 0:self.data.columns.size]
-        test = test.iloc[:, 0:self.data.columns.size]
+        # self.data['is_train'] = np.random.uniform(0, 1, len(self.data)) <= .75
+        #
+        # # Create two new dataframes, one with the training rows, one with the test rows
+        # train, test = self.data[self.data['is_train'] == True], self.data[self.data['is_train'] == False]
+        # self.data = self.data.iloc[:, 0:self.data.columns.size - 1]
+        # train = train.iloc[:, 0:self.data.columns.size]
+        # test = test.iloc[:, 0:self.data.columns.size]
+        train, test = DataSplitter().splitDataEqually(self.data, self.labelCol)
         i = 0
         print("DATA IN TESTER", self.data)
         for clf in self.classifiers:

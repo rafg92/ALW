@@ -40,7 +40,7 @@ class Plotter:
 
             # Plot data in the notebook
             #py.iplot(fig, filename='simple-plot-from-csv')
-            plt.plot(df[0].tail(4).values, df[index].tail(4).values,  color = "C"+str(c), label = self.names[c])
+            plt.plot(df[0].values, df[index].values,  color = "C"+str(c), label = self.names[c])
             plt.legend(loc = "best")
             #plt.savefig
             c += 1
@@ -53,19 +53,21 @@ if(__name__ == "__main__"):
     # dirPath = "Regression/Train/"
     # plotter = Plotter(clfNames, dirPath)
     # plotter.plotMetric("Accuracy", 1)
-    clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "rbf", "poly", "linear", "knn"]
+    #clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "rbf", "poly", "linear", "knn"]
+    clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "rbf", "poly", "linear"]
 
-    dirPath = "MultiClassification/Test/"
+    dirPath = "Regression/Test/"
     plotter = Plotter(clfNames, dirPath)
-    metricNames = ["Accuracy", "Precision", "Recall", "K_cohen", "F1_measure", "Log-loss"]
+    #metricNames = ["Accuracy", "Precision", "Recall", "K_cohen", "F1_measure", "Log-loss"]
+    metricNames = ["Mse"]
     i = 0
     while (i < len(metricNames)):
         plotter.plotMetric(dirPath + metricNames[i] + ".png", i+1)
         i += 1
 
-    dirPath = "MultiClassification/Train/"
+    dirPath = "Regression/Train/"
     plotter = Plotter(clfNames, dirPath)
-    metricNames = ["Accuracy", "Precision", "Recall", "K_cohen", "F1_measure", "Log-loss"]
+    #metricNames = ["Accuracy", "Precision", "Recall", "K_cohen", "F1_measure", "Log-loss"]
     i = 0
     while (i < len(metricNames)):
         plotter.plotMetric(dirPath + metricNames[i] + ".png", i+1)

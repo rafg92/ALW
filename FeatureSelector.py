@@ -73,9 +73,9 @@ class FeatureSelector:
         if (featureSize > train.columns.size):
             featureSize = 'all'
         X = train.values
-        Y = labels.values
+        Y = pd.factorize(labels)[0]
         # feature extraction
-        fit = SelectKBest(f_regression, k = featureSize).fit(X,Y)
+        fit = SelectKBest(f_classif, k = featureSize).fit(X,Y)
 
         # print("Num Features: ")
         # print(fit.n_features_)

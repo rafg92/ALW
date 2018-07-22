@@ -85,7 +85,9 @@ if(__name__ == "__main__"):
     #data = NanCleaner(data)
     #data = NanRemover(data)
 
-    train, test = DataSplitter().splitData(data.copy())
+    #train, test = DataSplitter().splitData(data.copy())
+    train, test = DataSplitter().splitDataEqually(data, labelName)
+
     Y_train = pd.factorize(train[labelName])[0]
     X_train_origin = train.iloc[:, 0:train.columns.size - 1].copy()
     Y_test = pd.factorize(test[labelName])[0]
