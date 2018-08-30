@@ -109,7 +109,7 @@ if(__name__ == "__main__"):
     np.random.seed(12345)
 
     # Read in data and display first 5 rows
-    data = pd.read_csv('training_R.csv', sep=";")
+    data = pd.read_csv('classification.csv', sep=";")
     # print("data.head: ")
     # print( data.head())
 

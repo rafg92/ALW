@@ -7,14 +7,10 @@ class DataSplitter:
         self.data = None
 
     def splitData(self, data, percent = .75):
+        # Create two new dataframes, one with the training rows, one with the test rows
+        #@param data: it's a dataframe
         self.data = data
-        # self.data['is_train'] = np.random.uniform(0, 1, len(self.data)) <= percent
-        #
-        # # Create two new dataframes, one with the training rows, one with the test rows
-        # train, test = self.data[self.data['is_train'] == True], self.data[self.data['is_train'] == False]
-        # self.data = self.data.iloc[:, 0:self.data.columns.size - 1]
-        # train = train.iloc[:, 0:self.data.columns.size]
-        # test = test.iloc[:, 0:self.data.columns.size]
+
         self.data = self.data.reindex(np.random.permutation(self.data.index))
         lenght = int(self.data.index.size * percent)
         train = self.data.iloc[0:lenght, :]
@@ -24,6 +20,7 @@ class DataSplitter:
     def splitDataEqually(self, data, labelName, percent = .75):
         my_data = data.copy()
 
+        #grouping the examples by their label
         grouped = my_data.groupby(labelName, as_index = False)
 
         # initializing empty data frames

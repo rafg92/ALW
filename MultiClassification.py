@@ -54,9 +54,7 @@ def printResults(results, clfName, n_features):
     if not file.is_file():
         open(path, "w+")
     f = open(path, "a")
-    # line = str(len(self.features)) + "," + str(self.results[index].accuracy/self.k) +  "," \
-    #        + str(self.results[index].k_cohen / self.k)\
-    #        + "," + str(self.results[index].log_loss / self.k) + '\n'
+
     line = str(n_features) + "," + str(results.accuracy) + "," \
            + str(results.precision) + "," + str(results.recall) \
            + "," + str(results.k_cohen) + "," + str(results.f1_measure) \
@@ -69,23 +67,18 @@ def printResults(results, clfName, n_features):
 
 if(__name__ == "__main__"):
     np.random.seed(12345)
-    #fileName = 'glasses.csv'
     fileName = "Frogs_MFCCs.csv"
-    # Read in data and display first 5 rows
+    # Read in data
     data = pd.read_csv(fileName, sep=",")
 
     print('The shape of our data is:', data.shape)
-    #colnames = ["RI","Na", "Mg", "Al", "Si", "K", "Ca", "Ba", "Fe","Type"]
     #one hot encoding: transorming nominal values
     labelName = "Species"
     labels = data[labelName]
     data = pd.get_dummies(data.iloc[:,0:data.columns.size - 1])
     print(data.columns.size)
     data[labelName] = labels
-    #data = NanCleaner(data)
-    #data = NanRemover(data)
 
-    #train, test = DataSplitter().splitData(data.copy())
     train, test = DataSplitter().splitDataEqually(data, labelName)
 
     Y_train = pd.factorize(train[labelName])[0]
@@ -93,11 +86,11 @@ if(__name__ == "__main__"):
     Y_test = pd.factorize(test[labelName])[0]
     X_test_origin = test.iloc[:, 0:test.columns.size - 1].copy()
 
-    #scaler = StandardScaler()
-    # X_train_minmax = min_max_scaler.fit_transform(X_train)
     scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1))
 
+    #don't cheat: fitting only on training data
     scaler.fit(X_train_origin)
+
     X_train_origin = pd.DataFrame(scaler.transform(X_train_origin.copy()), columns= X_train_origin.columns)
     # apply same transformation to test data
     X_test_origin = pd.DataFrame(scaler.transform(X_test_origin.copy()), columns= X_test_origin.columns)
@@ -105,24 +98,25 @@ if(__name__ == "__main__"):
     featureSize = train.columns.size
     threshold = 5
 
-    fs = FeatureSelector(train.copy())
+    trainTmp = X_train_origin.copy()
+    trainTmp[labelName] = Y_train
+    fs = FeatureSelector(trainTmp)
 
     clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "rbf", "poly", "linear", "knn"]
 
     while(featureSize >= threshold):
         features = fs.featureSelectionSelectKBestClassification(featureSize, labelName)
         print(features)
-        # clfs = [MLPClassifier(solver='adam', alpha=10, hidden_layer_sizes=(150,), random_state=1, activation="tanh")]
-        #
-        # clfNames = ["adam"]
+
         clfs = [MLPClassifier(solver='lbfgs', alpha=0.1, hidden_layer_sizes=(150,), random_state=1, activation="tanh", max_iter=500),
                 MLPClassifier(solver='adam', alpha=0.1, hidden_layer_sizes=(150,), random_state=1, activation="tanh", max_iter=500),
                 MLPClassifier(solver='sgd', alpha=0.1, hidden_layer_sizes=(150,), random_state=1, activation="tanh", max_iter=500),
-                RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 42), tree.DecisionTreeClassifier(),
+                RandomForestClassifier(n_estimators = 100, criterion = 'entropy', random_state = 42), tree.DecisionTreeClassifier(),
                 svm.SVC(kernel='rbf', C=1.0, gamma=0.1, probability=True),
                 svm.SVC(kernel='poly', C=1.0, degree=3, probability=True),
                 svm.SVC(kernel = 'linear', C = 1.0, probability=True),
                 KNeighborsClassifier()]
+
         tester = kFolderTester(10, clfs, train.copy(), features, labelName, clfNames)
         tester.startMultiClassificationTest()
 
@@ -148,6 +142,7 @@ if(__name__ == "__main__"):
             i += 1
 
         featureSize -= 5
+
     dirPath = "MultiClassification/Test/"
     plotter = Plotter(clfNames, dirPath)
     metricNames = ["Accuracy", "Precision", "Recall", "K_cohen", "F1_measure", "Log-loss"]

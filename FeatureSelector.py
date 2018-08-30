@@ -9,6 +9,8 @@ class FeatureSelector:
     def __init__(self, data):
         self.data = data
 
+
+    #deprecated
     def featureSelectionByLogisticRegression(self, featureSize):
         array = self.data.values
         X = array[:, 0:self.data.columns.size - 1]
@@ -26,6 +28,7 @@ class FeatureSelector:
         features = (self.data.columns[0:self.data.columns.size - 1])[fit.support_]
         return features
 
+    #deprecated
     def featureSelectionRegression(self, featureSize, labelName):
         #feature selection for regression tasks
         data = self.data.copy()
@@ -42,7 +45,6 @@ class FeatureSelector:
         print(fit.n_features_)
         print("Selected Features: ")
         print(fit.support_)
-        # print("Feature Ranking: %s") % fit.ranking_
 
         features = (train.columns)[fit.support_]
         return features
@@ -57,11 +59,6 @@ class FeatureSelector:
         Y = labels.values
         # feature extraction
         fit = SelectKBest(f_regression, k = featureSize).fit(X,Y)
-        # print("Num Features: ")
-        # print(fit.n_features_)
-        # print("Selected Features: ")
-        # print(fit.support_)
-        # print("Feature Ranking: %s") % fit.ranking_
 
         features = train.columns[fit.get_support()]
         return features
@@ -77,11 +74,6 @@ class FeatureSelector:
         # feature extraction
         fit = SelectKBest(f_classif, k = featureSize).fit(X,Y)
 
-        # print("Num Features: ")
-        # print(fit.n_features_)
-        # print("Selected Features: ")
-        # print(fit.support_)
-        # print("Feature Ranking: %s") % fit.ranking_
         features = train.columns[fit.get_support()]
 
         return features

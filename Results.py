@@ -1,3 +1,5 @@
+
+#util class to track the results of the experiments
 class Results:
     def __init__(self):
         self.accuracy = 0

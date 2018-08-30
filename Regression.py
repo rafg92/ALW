@@ -9,6 +9,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn import svm
 from sklearn.feature_selection import SelectKBest, mutual_info_classif, RFE
 from sklearn.metrics import mean_squared_error
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
@@ -37,7 +38,7 @@ if(__name__ == "__main__"):
     np.random.seed(12345)
 
     # Read in data and display first 5 rows
-    data = pd.read_csv('training_AMPL.csv', sep=",")
+    data = pd.read_csv('regression.csv', sep=",")
 
     print('The shape of our data is:', data.shape)
 
@@ -52,10 +53,10 @@ if(__name__ == "__main__"):
     print(train.copy())
 
     #preparing test and training for final evaluation: using copies not to create problems
-    #scaler = StandardScaler()
 
     scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1))
 
+    #don't cheat: fit only on training data
     scaler.fit(train)
 
     trainTmp = pd.DataFrame(scaler.transform(train.copy()), columns=train.columns)
@@ -65,9 +66,9 @@ if(__name__ == "__main__"):
     fsSize = train.columns.size
     threshold = 10
 
-    fs = FeatureSelector(train.copy())
+    fs = FeatureSelector(trainTmp.copy())
 
-    clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "linear", "poly", "rbf", ]
+    clfNames = ["lbfgs", "adam", "sgd", "randomForest", "decisionTree", "linear", "poly", "rbf", "Knn"]
 
     while(fsSize >= threshold):
         features = fs.featureSelectionSelectKBestRegression(fsSize, labelName)
@@ -80,8 +81,10 @@ if(__name__ == "__main__"):
         clfs = [MLPRegressor(solver='lbfgs', alpha = 10.0, hidden_layer_sizes=(10,), activation="tanh",epsilon=1e-4),
                 MLPRegressor(solver='adam', alpha=10.0, hidden_layer_sizes=(10,), activation="tanh", epsilon=1e-4),
                 MLPRegressor(solver='sgd', alpha=10.0, hidden_layer_sizes=(10,), activation="tanh", epsilon=1e-4),
-                RandomForestRegressor(n_jobs=10, random_state=45, n_estimators=10),  DecisionTreeRegressor(), svr_lin, svr_poly, svr_rbf]
+                RandomForestRegressor(n_jobs=10, random_state=45, n_estimators=10),  DecisionTreeRegressor(), svr_lin, svr_poly, svr_rbf,
+                KNeighborsRegressor(weights="distance")]
 
+        #testing on the training
         tester = kFolderTester(4, clfs, train.copy(), features, labelName, clfNames)
         tester.startRegressionTest()
 
